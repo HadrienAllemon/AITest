@@ -3,8 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Elara1.Memory;
+using Elara1.DataAccess;
 using Elara1.Prompts;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Logging;
 using OllamaSharp;
@@ -17,12 +18,13 @@ namespace Elara1.AI
         public IChatClient chatClient;
 
         private readonly ILogger<ChatService> _logger;
-        private List<string> mockFaqDatabase = MockMemoryStore.mockFaqDatabase;
+        private readonly IDbContextFactory<ElaraDbContext> _dbContextFactory;
         private List<ChatMessage> chatHistory = new();
 
-        public ChatService(ILogger<ChatService> logger)
+        public ChatService(ILogger<ChatService> logger, IDbContextFactory<ElaraDbContext> dbContextFactory)
         {
             _logger = logger;
+            _dbContextFactory = dbContextFactory;
             chatClient = new OllamaApiClient(
                 new Uri("http://localhost:11434/"),
                 modelName
@@ -34,8 +36,11 @@ namespace Elara1.AI
             // --- MIDDLEWARE STEP 1: Search FAQ Database ---
             // Simple keyword/relevance match simulation:
             _logger.LogDebug("Looking into DB facts");
-            var matchedFacts = mockFaqDatabase
-                .Where(fact => ContainsRelevantKeywords(userPrompt, fact))
+            await using var db = await _dbContextFactory.CreateDbContextAsync();
+            var facts = await db.MemoryFacts.ToListAsync();
+            var matchedFacts = facts
+                .Where(fact => ContainsRelevantKeywords(userPrompt, fact.Content))
+                .Select(fact => fact.Content)
                 .ToList();
 
             // --- MIDDLEWARE STEP 2: Build System Instructions ---
@@ -61,8 +66,7 @@ namespace Elara1.AI
             string fullResponse = "";
             var options = new ChatOptions
             {
-                // Temperature: Slightly higher means more creative/dynamic phrasing (0.7 to 0.8)
-                Temperature = 0.55f,
+                Temperature = 0.6f,
 
                 // Frequency & Presence Penalties: Discourages repetitive phrases and predictable structures
                 FrequencyPenalty = 0.5f,

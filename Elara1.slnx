@@ -1,3 +1,4 @@
 <Solution>
   <Project Path="Elara1/Elara1.csproj" />
+  <Project Path="Elara1.DataAccess/Elara1.DataAccess.csproj" />
 </Solution>

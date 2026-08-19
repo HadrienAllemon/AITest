@@ -1,4 +1,6 @@
 using Elara1.AI;
+using Elara1.DataAccess;
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -13,6 +15,11 @@ builder.Services.AddCors(options =>
               .AllowAnyMethod()
     );
 });
+
+// Factory (not AddDbContext) because ChatService below is a singleton, and a scoped
+// DbContext must never be injected directly into a singleton.
+builder.Services.AddDbContextFactory<ElaraDbContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 // Singleton so chat history persists across requests, matching the old REPL behavior.
 builder.Services.AddSingleton<ChatService>();
