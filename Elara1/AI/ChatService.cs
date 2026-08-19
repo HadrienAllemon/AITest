@@ -13,7 +13,7 @@ namespace Elara1.AI
 {
     internal class ChatService
     {
-        string modelName = "mannix/llama3.1-8b-abliterated"; // Or "qwen2.5:7b" / "llama3.1:8b"
+        string modelName = "dolphin-llama3"; // Or "qwen2.5:7b" / "llama3.1:8b"
         public IChatClient chatClient;
 
         private readonly ILogger<ChatService> _logger;
@@ -39,7 +39,7 @@ namespace Elara1.AI
                 .ToList();
 
             // --- MIDDLEWARE STEP 2: Build System Instructions ---
-            string systemPrompt = SystemPrompt.Persona;
+            string systemPrompt = SystemPrompt.PersonaClearCut;
 
             if (matchedFacts.Any())
             {
@@ -62,7 +62,7 @@ namespace Elara1.AI
             var options = new ChatOptions
             {
                 // Temperature: Slightly higher means more creative/dynamic phrasing (0.7 to 0.8)
-                Temperature = 0.75f,
+                Temperature = 0.55f,
 
                 // Frequency & Presence Penalties: Discourages repetitive phrases and predictable structures
                 FrequencyPenalty = 0.5f,

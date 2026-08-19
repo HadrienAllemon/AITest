@@ -1,22 +1,40 @@
 using Elara1.AI;
-using Microsoft.Extensions.Logging;
 
-using var loggerFactory = LoggerFactory.Create(builder =>
-    builder.AddConsole().SetMinimumLevel(LogLevel.Debug)
-);
-var logger = loggerFactory.CreateLogger<ChatService>();
+var builder = WebApplication.CreateBuilder(args);
 
-var chatService = new ChatService(logger);
+builder.Logging.SetMinimumLevel(LogLevel.Debug);
 
-while (true)
+const string DevCorsPolicy = "DevCors";
+builder.Services.AddCors(options =>
 {
-    Console.Write("\nYou: ");
-    var input = Console.ReadLine();
+    options.AddPolicy(DevCorsPolicy, policy =>
+        policy.WithOrigins("http://localhost:5173")
+              .AllowAnyHeader()
+              .AllowAnyMethod()
+    );
+});
 
-    if (string.IsNullOrWhiteSpace(input) || input.Trim().ToLower() == "exit")
-        break;
+// Singleton so chat history persists across requests, matching the old REPL behavior.
+builder.Services.AddSingleton<ChatService>();
 
-    var response = await chatService.SendMessageAsync(input);
+builder.WebHost.UseUrls("http://localhost:5199");
 
-    Console.WriteLine($"\nAI: {response}");
-}
+var app = builder.Build();
+
+app.UseCors(DevCorsPolicy);
+
+app.MapGet("/api/health", () => Results.Ok(new { status = "ok" }));
+
+app.MapPost("/api/chat", async (ChatRequest request, ChatService chatService) =>
+{
+    if (string.IsNullOrWhiteSpace(request.Message))
+        return Results.BadRequest(new { error = "Message must not be empty." });
+
+    var reply = await chatService.SendMessageAsync(request.Message);
+    return Results.Ok(new ChatResponse(reply));
+});
+
+app.Run();
+
+record ChatRequest(string Message);
+record ChatResponse(string Reply);
