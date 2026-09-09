@@ -1,13 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Elara1.DataAccess;
+﻿using Elara1.DataAccess;
+using Elara1.DataAccess.History;
 using Elara1.Prompts;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.AI;
-using Microsoft.Extensions.Logging;
 using OllamaSharp;
 
 namespace Elara1.AI
@@ -31,8 +26,14 @@ namespace Elara1.AI
             );
         }
 
-        public async Task<string> SendMessageAsync(string userPrompt)
+        public async Task<string> SendMessageAsync(string userPrompt, int conversationId = -1)
         {
+
+            Conversation conv = new()
+            {
+                Title = "now",
+                CreatedAt = DateTime.Now,
+            };
             // --- MIDDLEWARE STEP 1: Search FAQ Database ---
             // Simple keyword/relevance match simulation:
             _logger.LogDebug("Looking into DB facts");
@@ -82,8 +83,33 @@ namespace Elara1.AI
 
             // Append AI response to maintain conversational context
             chatHistory.Add(new ChatMessage(ChatRole.Assistant, fullResponse));
-
+            await AddMessageToConversation(new Message(fullResponse, ConvertChatRoleToString(ChatRole.Assistant)), conv.Id);
             return fullResponse;
+        }
+
+        public async Task AddMessageToConversation(Message msg, int Id)
+        {
+            var context = _dbContextFactory.CreateDbContext();
+            var conversation = await context.Conversations.FindAsync(Id);
+            if (conversation == null) return;
+            conversation?.Messages.Add(msg);
+            await context.SaveChangesAsync();
+        }
+
+        public string ConvertChatRoleToString(ChatRole chatRole)
+        {
+            if (chatRole == ChatRole.Assistant) return "Assistant";
+            if (chatRole == ChatRole.User) return "User";
+            if (chatRole == ChatRole.System) return "System";
+            if (chatRole == ChatRole.Tool) return "Tool";
+            return "Unknown";
+        }
+
+        public async Task CreateConversation(Conversation conv)
+        {
+            var context = _dbContextFactory.CreateDbContext();
+            await context.Conversations.AddAsync(conv);
+            await context.SaveChangesAsync();
         }
 
         // Simple helper to simulate basic FAQ relevance matching
