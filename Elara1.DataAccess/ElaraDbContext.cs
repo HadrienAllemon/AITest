@@ -48,7 +48,7 @@ namespace Elara1.DataAccess
 
                 entity.HasOne(m => m.Role)
                     .WithMany(r => r.Messages)
-                    .HasForeignKey(m => m.RoleId)
+                    .HasForeignKey(m => m.Role)
                     .HasConstraintName("FK_Messages_Roles");
             });
 

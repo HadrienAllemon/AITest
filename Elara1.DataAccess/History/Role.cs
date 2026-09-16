@@ -5,6 +5,6 @@ namespace Elara1.DataAccess.History
         public int Id { get; set; }
         public string? Name { get; set; }
 
-        public ICollection<Message> Messages { get; } = [];
+        public ICollection<Message> Messages { get; } = new List<Message>();
     }
 }

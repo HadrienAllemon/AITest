@@ -14,12 +14,14 @@ namespace Elara1.AI
 
         private readonly ILogger<ChatService> _logger;
         private readonly IDbContextFactory<ElaraDbContext> _dbContextFactory;
+        private readonly RoleCache _roleCache;
         private List<ChatMessage> chatHistory = new();
 
-        public ChatService(ILogger<ChatService> logger, IDbContextFactory<ElaraDbContext> dbContextFactory)
+        public ChatService(ILogger<ChatService> logger, IDbContextFactory<ElaraDbContext> dbContextFactory, RoleCache roleCache)
         {
             _logger = logger;
             _dbContextFactory = dbContextFactory;
+            _roleCache = roleCache;
             chatClient = new OllamaApiClient(
                 new Uri("http://localhost:11434/"),
                 modelName
@@ -83,7 +85,8 @@ namespace Elara1.AI
 
             // Append AI response to maintain conversational context
             chatHistory.Add(new ChatMessage(ChatRole.Assistant, fullResponse));
-            await AddMessageToConversation(new Message(fullResponse, ConvertChatRoleToString(ChatRole.Assistant)), conv.Id);
+            var assistantRole = await _roleCache.ResolveAsync(ChatRole.Assistant);
+            await AddMessageToConversation(new Message(fullResponse, assistantRole), conv.Id);
             return fullResponse;
         }
 
@@ -94,15 +97,6 @@ namespace Elara1.AI
             if (conversation == null) return;
             conversation?.Messages.Add(msg);
             await context.SaveChangesAsync();
-        }
-
-        public string ConvertChatRoleToString(ChatRole chatRole)
-        {
-            if (chatRole == ChatRole.Assistant) return "Assistant";
-            if (chatRole == ChatRole.User) return "User";
-            if (chatRole == ChatRole.System) return "System";
-            if (chatRole == ChatRole.Tool) return "Tool";
-            return "Unknown";
         }
 
         public async Task CreateConversation(Conversation conv)
