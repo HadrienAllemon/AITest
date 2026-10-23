@@ -83,7 +83,8 @@ namespace Elara1.AI
 
             // Append AI response to maintain conversational context
             chatHistory.Add(new ChatMessage(ChatRole.Assistant, fullResponse));
-            await AddMessageToConversation(new Message(fullResponse, ConvertChatRoleToString(ChatRole.Assistant)), conv.Id);
+            var role = await db.Roles.SingleAsync(r => r.Name == "Assistant");
+            await AddMessageToConversation(new Message(fullResponse, role.Id), conv.Id);
             return fullResponse;
         }
 

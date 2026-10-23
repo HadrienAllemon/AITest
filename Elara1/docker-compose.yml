@@ -1,0 +1,15 @@
+services:
+  local-test-db:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: Elara-local
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_PID: "Developer"
+      MSSQL_SA_PASSWORD: "MoclSqlDbPassword!!1234"
+    ports:
+      - "14330:1433"
+    volumes:
+      - Elara-local-db-data:/var/opt/mssql
+
+volumes:
+  Elara-local-db-data:

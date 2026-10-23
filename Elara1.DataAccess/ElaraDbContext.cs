@@ -56,6 +56,13 @@ namespace Elara1.DataAccess
             {
                 entity.Property(e => e.Name).HasMaxLength(50);
             });
+
+            modelBuilder.Entity<Role>().HasData(
+                new Role { Id = 1, Name = "System" },
+                new Role { Id = 2, Name = "User" },
+                new Role { Id = 3, Name = "Assistant" },
+                new Role { Id = 4, Name = "Tool" }
+            );
         }
     }
 }

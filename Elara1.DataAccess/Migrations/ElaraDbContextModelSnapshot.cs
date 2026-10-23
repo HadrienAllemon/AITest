@@ -88,6 +88,28 @@ namespace Elara1.DataAccess.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Roles");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            Name = "System"
+                        },
+                        new
+                        {
+                            Id = 2,
+                            Name = "User"
+                        },
+                        new
+                        {
+                            Id = 3,
+                            Name = "Assistant"
+                        },
+                        new
+                        {
+                            Id = 4,
+                            Name = "Tool"
+                        });
                 });
 
             modelBuilder.Entity("Elara1.DataAccess.Memory.MemoryFact", b =>
