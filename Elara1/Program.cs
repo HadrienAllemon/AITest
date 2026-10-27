@@ -21,6 +21,10 @@ builder.Services.AddCors(options =>
 builder.Services.AddDbContextFactory<ElaraDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
+// Singleton alongside ChatService: the known Role rows (Assistant/User/System/Tool/Unknown)
+// are loaded/created once and reused for the process lifetime.
+builder.Services.AddSingleton<RoleCache>();
+
 // Singleton so chat history persists across requests, matching the old REPL behavior.
 builder.Services.AddSingleton<ChatService>();
 
